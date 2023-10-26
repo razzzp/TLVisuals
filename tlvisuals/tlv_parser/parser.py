@@ -7,13 +7,16 @@ import re
 from typing import Iterator
 
 
-class ByteGetter:
+class ByteGetter(Iterator[int]):
 
    def __init__(self, stream: io.TextIOBase):
       self._stream = stream
       self.whitespace_regx = re.compile(r'\s')
 
-   def next(self) -> int:
+   def __iter__(self) -> Iterator[int]:
+      return self
+
+   def __next__(self) -> int:
       byte = ''
       cur = self._stream.read(1)
       while cur != None and cur != '':
@@ -25,9 +28,12 @@ class ByteGetter:
                return b[0]
             except:
                raise ValueError("Invalid hex found " + byte)
-            break
          cur = self._stream.read(1)
-      return None
+      
+      if len(byte) != 0:
+         raise ValueError("Odd number of chars found")
+      
+      raise StopIteration()
       
       
       
@@ -45,12 +51,11 @@ class TagType(IntFlag):
 
 
 class Tag:
-   def __init__(self, cla : TagClass, type: TagType, tag_number: int) -> None:
+   def __init__(self, cla : TagClass, type: TagType, tag_number: int, raw: bytearray) -> None:
       self.cla = cla
       self.type = type
       self.tag_number = tag_number
-      self.length = 0 
-      self.raw = b''
+      self.raw = raw
 
 class Length:
    def __init__(self, length, len_of_length: int = 0) -> None:
@@ -75,34 +80,72 @@ class BERTLVParser:
    def __init__(self) -> None:
       pass
    
-   def _parse_tag(self, input : ByteGetter) -> Tag:
-      cur_byte = input.next()
-      if cur_byte == None:
+   def _parse_tag(self, input :  Iterator[int]) -> Tag:
+      try:
+         cur_byte = input.__next__()
+      except StopIteration:
          return None
       
+      raw = bytearray()
+      raw.append(cur_byte)
+
+      # first bits 8-7 (LSB) is class
+      # Universal/Application/Context Specific/Private
       cla = TagClass((cur_byte & 0b11000000) >> 6)
       val = (cur_byte & 0b00100000) >> 5
+
+      # bit 6 is type
+      # Primitive/Constructed
       type = TagType(int(val))
       tag_number = cur_byte & 0b00011111
-      return Tag(cla,type, tag_number)
+
+      # case tag on multiple bytes
+      tag_number_acc=''
+      if tag_number == 31:
+         while True:
+            # get next bytes
+            try:
+               cur_tag_num_byte = input.__next__()
+            except StopIteration as e:
+               raise ValueError("Unexpected EOF when parsing tag")
+
+            raw.append(cur_tag_num_byte)
+            cur_tag_num = cur_tag_num_byte & 0b01111111
+
+            if len(raw) == 2 and cur_tag_num == 0:
+               # first subsequent byte cannot be 0
+               raise ValueError("First subsequent tag byte cannot be 0x00")
+            
+            # append bits of cur tag num
+            tag_number_acc+= '{0:07b}'.format(cur_tag_num)
+
+            # if first bit 0, means last byte
+            if cur_tag_num_byte & 0b10000000 == 0:
+               break
+         # convert bit string to int, int is unbounded
+         tag_number =int(tag_number_acc, 2)
+
+      return Tag(cla,type, tag_number, raw)
 
 
 
-   def _parse_length(self, input : ByteGetter) -> Length:
-      cur_byte = input.next()
-      if cur_byte == None:
+   def _parse_length(self, input :  Iterator[int]) -> Length:
+      try:
+         cur_byte = input.__next__()
+      except StopIteration:
          raise EOFError("Unexpected EOF while parsing length")
       
       if cur_byte & 0b1000_0000 == 0:
          return Length(cur_byte)
       return Length(0)
 
-   def _parse_value(self, input : ByteGetter, length: Length) -> Value:
+   def _parse_value(self, input :  Iterator[int], length: Length) -> Value:
       len = length.length
       val = bytearray()
       while len > 0:
-         cur_byte = input.next()
-         if cur_byte == None:
+         try:
+            cur_byte = input.__next__()
+         except StopIteration:
             raise EOFError("Unexpected EOF while parsing value")
          val.append(cur_byte)
          len -= 1
@@ -110,7 +153,7 @@ class BERTLVParser:
       return Value(val)
 
 
-   def parse_tlv(self, input : ByteGetter) -> list[TLV]:
+   def parse_tlv(self, input : Iterator[int]) -> list[TLV]:
       result = []
       while True:
          try:
@@ -123,13 +166,3 @@ class BERTLVParser:
          except Exception as e:
             raise e
       return result
-
-
-
-def test():
-   stream = io.StringIO("A20400112233")
-   input = ByteGetter(stream)
-   print(BERTLVParser().parse_tlv(input))
-
-if __name__ == "__main__":
-   test()
