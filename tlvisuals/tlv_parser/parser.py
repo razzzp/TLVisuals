@@ -107,7 +107,7 @@ class BERTLVParser:
             try:
                cur_tag_num_byte = input.__next__()
             except StopIteration as e:
-               raise ValueError("Unexpected EOF when parsing tag")
+               raise EOFError("Unexpected EOF when parsing tag")
 
             raw.append(cur_tag_num_byte)
             cur_tag_num = cur_tag_num_byte & 0b01111111
@@ -138,6 +138,7 @@ class BERTLVParser:
       if cur_byte & 0b1000_0000 == 0:
          return Length(cur_byte)
       return Length(0)
+
 
    def _parse_value(self, input :  Iterator[int], length: Length) -> Value:
       len = length.length

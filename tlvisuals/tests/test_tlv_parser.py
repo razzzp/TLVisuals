@@ -44,7 +44,7 @@ class TestTLVParser(unittest.TestCase):
    def test_tag_multiple_eof(self):
       bytes = b'\x1f\x81'
       iter = bytes.__iter__()
-      self.assertRaises(ValueError, self.parser._parse_tag, iter)
+      self.assertRaises(EOFError, self.parser._parse_tag, iter)
 
 if __name__ == "__main__":
    unittest.main()
