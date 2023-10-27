@@ -1,7 +1,7 @@
 from typing import cast
 import unittest
 
-from tlvisuals.parser import TLVParser, TagClass, TagType
+from tlvisuals.tlv_parser import TLVParser, TagClass, TagType
 from tlvisuals.tlv import TLV, ConstructedValue, Length, PrimitiveValue, Tag
 
 class TestTLVParser(unittest.TestCase):
