@@ -86,12 +86,31 @@ class ConstructedValue(Value):
       self.children = children
 
 
-
-class TLVParser:
+class DiagnosticsCollector:
    def __init__(self) -> None:
+      self.diags = []
       pass
 
-   def _next(input :  Iterator[int])->int:
+   def add_error(self, error: any):
+      self.diags.append(error)
+
+class TLVParser:
+   def __init__(
+         self, 
+         parent_tlv : TLV | None = None, 
+         diagnostic_collector: DiagnosticsCollector = DiagnosticsCollector()
+         ) -> None:
+      self._parent_tlv = parent_tlv
+      self._bytes_taken = 0
+      self._diags = diagnostic_collector
+      
+
+   def _next(self, input :  Iterator[int])->int:
+      # if bytes taken exceeds parent length, raise error
+      if self._parent_tlv and self._parent_tlv.length.length == self._bytes_taken:
+         self._diags.add_error(f'TLV length exceeds parent length of: {self._parent_tlv.length.length}')
+      
+      self._bytes_taken += 1
       return input.__next__()
    
    def _parse_tag(self, input :  Iterator[int]) -> Tag:
