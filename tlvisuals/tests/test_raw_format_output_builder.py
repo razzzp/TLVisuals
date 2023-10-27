@@ -13,15 +13,15 @@ class RawFormatOutputBuilderTest(unittest.TestCase):
    
    def create_universal_primitive_tlv(self, tag_number: int, length: int, value: bytes):
       return TLV(
-         tag= Tag(cla=TagClass.UNIVERSAL,type=TagType.PRIMITIVE,tag_number=tag_number,raw=tag_number.to_bytes(1)),
-         length= Length(length=length,raw=length.to_bytes(1)),
+         tag= Tag(cla=TagClass.UNIVERSAL,type=TagType.PRIMITIVE,tag_number=tag_number,raw=tag_number.to_bytes(1,"big")),
+         length= Length(length=length,raw=length.to_bytes(1,"big")),
          value= PrimitiveValue(raw=value)
       )
 
    def create_universal_constructed_tlv(self, tag_number: int, length: int, children: list[TLV]):
       return TLV(
-         tag= Tag(cla=TagClass.UNIVERSAL,type=TagType.CONSTRUCTED,tag_number=tag_number,raw=(tag_number | 0b0010_0000).to_bytes(1)),
-         length= Length(length=length,raw=length.to_bytes(1)),
+         tag= Tag(cla=TagClass.UNIVERSAL,type=TagType.CONSTRUCTED,tag_number=tag_number,raw=(tag_number | 0b0010_0000).to_bytes(1,"big")),
+         length= Length(length=length,raw=length.to_bytes(1,"big")),
          value= ConstructedValue(children=children)
       )
    
@@ -40,7 +40,7 @@ class RawFormatOutputBuilderTest(unittest.TestCase):
          input.append(self.create_universal_primitive_tlv(i,1,b'\xff'))
       io = StringIO()
       for i in range(1, 9):
-         io.write(f'{i.to_bytes(1).hex().upper()} 01 FF\n')
+         io.write(f'{i.to_bytes(1,"big").hex().upper()} 01 FF\n')
       expected = io.getvalue()
 
       result = self.builder.build(input)
@@ -55,7 +55,7 @@ class RawFormatOutputBuilderTest(unittest.TestCase):
       io = StringIO()
       io.write("21 00\n")
       for i in range(1, 9):
-         io.write(f'   {i.to_bytes(1).hex().upper()} 01 FF\n')
+         io.write(f'   {i.to_bytes(1, "big").hex().upper()} 01 FF\n')
       io.write('\n')
       expected = io.getvalue()
 
