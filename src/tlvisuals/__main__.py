@@ -12,7 +12,11 @@ class ProgramOptions:
 
 def _parse_arguments(argv: list[str]) -> ProgramOptions:
     options = ProgramOptions()
-    if len(argv) == 0: return options
+    if len(argv
+    
+    
+    
+    ) == 0: return options
 
     iter = argv.__iter__()
     try:
