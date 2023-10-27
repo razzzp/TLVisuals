@@ -58,27 +58,41 @@ class Tag:
       self.raw = raw
 
 class Length:
-   def __init__(self, length, len_of_length: int = 0) -> None:
+   def __init__(self, length: int, raw: bytearray) -> None:
       self.length = length
-      self.len_of_length = len_of_length 
-      self.raw = b''
+      self.raw = raw
 
 class Value:
-   def __init__(self, value: bytes) -> None:
-      self.length = 0 
-      self.value = b''
+   pass
+
+class PrimitiveValue(Value):
+   def __init__(self, raw: bytearray = bytearray()) -> None:
+      self.raw = raw
 
 
 class TLV:
-   def __init__(self, tag, length, value) -> None:
+   """
+   value should be objects deriving Value class, or none
+   none represents length of 0
+   """
+   def __init__(self, tag:Tag, length:Length, value: Value|None ) -> None:
       self.tag = tag
       self.length = length
       self.value = value
 
 
-class BERTLVParser:
+class ConstructedValue(Value):
+   def __init__(self, children: list[TLV] = []) -> None:
+      self.children = children
+
+
+
+class TLVParser:
    def __init__(self) -> None:
       pass
+
+   def _next(input :  Iterator[int])->int:
+      return input.__next__()
    
    def _parse_tag(self, input :  Iterator[int]) -> Tag:
       try:
@@ -91,13 +105,13 @@ class BERTLVParser:
 
       # first bits 8-7 (LSB) is class
       # Universal/Application/Context Specific/Private
-      cla = TagClass((cur_byte & 0b11000000) >> 6)
-      val = (cur_byte & 0b00100000) >> 5
+      cla = TagClass((cur_byte & 0b1100_0000) >> 6)
+      val = (cur_byte & 0b0010_0000) >> 5
 
       # bit 6 is type
       # Primitive/Constructed
       type = TagType(int(val))
-      tag_number = cur_byte & 0b00011111
+      tag_number = cur_byte & 0b0001_1111
 
       # case tag on multiple bytes
       tag_number_acc=''
@@ -110,7 +124,7 @@ class BERTLVParser:
                raise EOFError("Unexpected EOF when parsing tag")
 
             raw.append(cur_tag_num_byte)
-            cur_tag_num = cur_tag_num_byte & 0b01111111
+            cur_tag_num = cur_tag_num_byte & 0b0111_1111
 
             if len(raw) == 2 and cur_tag_num == 0:
                # first subsequent byte cannot be 0
@@ -120,7 +134,7 @@ class BERTLVParser:
             tag_number_acc+= '{0:07b}'.format(cur_tag_num)
 
             # if first bit 0, means last byte
-            if cur_tag_num_byte & 0b10000000 == 0:
+            if cur_tag_num_byte & 0b1000_0000 == 0:
                break
          # convert bit string to int, int is unbounded
          tag_number =int(tag_number_acc, 2)
@@ -136,22 +150,61 @@ class BERTLVParser:
          raise EOFError("Unexpected EOF while parsing length")
       
       if cur_byte & 0b1000_0000 == 0:
-         return Length(cur_byte)
-      return Length(0)
+         raw = bytearray()
+         raw.append(cur_byte)
+         return Length(cur_byte, raw)
+      elif cur_byte & 0b1000_0000 == 0 and cur_byte & 0b0111_1111:
+         # case using indefinite form, i.e. length byte is 0x80
+         # not supported yet
+         raise ValueError("Indefinite length encoding is not supported")
+      else:
+         length_of_length = cur_byte & 0b0111_1111
+         real_length = 0
+         raw = bytearray()
+         raw.append(cur_byte)
+         # multiple byte length
+         while length_of_length>0:
+            try:
+               cur_byte = input.__next__()
+            except StopIteration:
+               raise EOFError("Unexpected EOF while parsing length")
+            
+            length_of_length-=1
+            # shift left since there are more bytes
+            real_length = real_length << 8
+            real_length += cur_byte
+            raw.append(cur_byte)
+         
+         return Length(length=real_length,raw=raw)
 
 
-   def _parse_value(self, input :  Iterator[int], length: Length) -> Value:
-      len = length.length
+   def _parse_primitive(self, input :  Iterator[int], in_tlv: TLV):
+      expected_len = in_tlv.length.length
       val = bytearray()
-      while len > 0:
+      while expected_len > 0:
          try:
             cur_byte = input.__next__()
          except StopIteration:
             raise EOFError("Unexpected EOF while parsing value")
          val.append(cur_byte)
-         len -= 1
+         expected_len -= 1
+      return PrimitiveValue(val)
 
-      return Value(val)
+   """ recursively parse children TLV """
+   def _parse_constructed(self, input :  Iterator[int],  in_tlv: TLV):
+      expected_len = in_tlv.length.length
+      children = self.parse_tlv(input)
+      return ConstructedValue(children)
+
+
+   def _parse_value(self, input :  Iterator[int],  in_tlv: TLV) -> Value:
+      if in_tlv.length.length == 0:
+         return None
+      
+      if in_tlv.tag.type == TagType.PRIMITIVE:
+         return self._parse_primitive(input, in_tlv)
+      else:
+         return self._parse_constructed(input, in_tlv)
 
 
    def parse_tlv(self, input : Iterator[int]) -> list[TLV]:
@@ -162,8 +215,13 @@ class BERTLVParser:
             if tag == None:
                break
             len = self._parse_length(input)
-            value = self._parse_value(input, len)
-            result.append(TLV(tag,len,value))
+
+            tlv= TLV(tag, len, None)
+
+            value = self._parse_value(input, tlv)
+
+            tlv.value = value
+            result.append(tlv)
          except Exception as e:
             raise e
       return result
