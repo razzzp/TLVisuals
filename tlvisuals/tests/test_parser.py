@@ -9,7 +9,7 @@ class TestTLVParser(unittest.TestCase):
       self.parser = TLVParser()
       
    def create_primitive_tag(self)->Tag:
-      return Tag(TagClass.CONTEXT_SPECIFIC,TagType.PRIMITIVE,1, bytearray(b'\x81'))\
+      return Tag(TagClass.CONTEXT_SPECIFIC,TagType.PRIMITIVE,1, bytearray(b'\x81'))
       
    def create_constructed_tag(self)->Tag:
       return Tag(TagClass.CONTEXT_SPECIFIC,TagType.CONSTRUCTED,1, bytearray(b'\xA1'))
@@ -158,6 +158,7 @@ class TestTLVParser(unittest.TestCase):
                        .children[0].value
                        .children[0].value, None)
       
+   
    def test_value_constructed_value_too_long(self):
       bytes = b'\x81\x04\x00\x01\x02\x03'
       input = bytes.__iter__()

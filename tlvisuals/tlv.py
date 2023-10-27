@@ -15,6 +15,12 @@ class TagType(IntFlag):
    CONSTRUCTED = 1
 
 
+class PrimitiveType(IntFlag):
+   UNKNOWN = 0
+   BOOLEAN = 1
+
+
+
 class Tag:
    def __init__(self, cla : TagClass, type: TagType, tag_number: int, raw: bytearray) -> None:
       self.cla = cla
@@ -28,11 +34,15 @@ class Length:
       self.raw = raw
 
 class Value:
-   pass
+   def get_raw(self) -> bytes:
+      raise NotImplementedError()
 
 class PrimitiveValue(Value):
    def __init__(self, raw: bytearray|None) -> None:
       self.raw = bytearray() if raw is None  else raw
+
+   def get_raw(self) -> bytes:
+      return self.raw
 
 
 class TLV:
