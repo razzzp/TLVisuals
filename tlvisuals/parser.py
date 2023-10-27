@@ -1,11 +1,8 @@
 
-
-
-from enum import Enum, IntFlag
 import io
 import re
 from typing import Iterator
-
+from tlvisuals.tlv import TLV,Tag,Length,Value,TagClass,TagType,PrimitiveValue,ConstructedValue
 
 class ByteGetter(Iterator[int]):
 
@@ -35,87 +32,46 @@ class ByteGetter(Iterator[int]):
       
       raise StopIteration()
       
-      
-      
-
-class TagClass(IntFlag):
-   UNIVERSAL = 0
-   APPLICATION =1
-   CONTEXT_SPECIFIC = 2
-   PRIVATE =3
-
-   
-class TagType(IntFlag):
-   PRIMITIVE = 0
-   CONSTRUCTED = 1
-
-
-class Tag:
-   def __init__(self, cla : TagClass, type: TagType, tag_number: int, raw: bytearray) -> None:
-      self.cla = cla
-      self.type = type
-      self.tag_number = tag_number
-      self.raw = raw
-
-class Length:
-   def __init__(self, length: int, raw: bytearray) -> None:
-      self.length = length
-      self.raw = raw
-
-class Value:
-   pass
-
-class PrimitiveValue(Value):
-   def __init__(self, raw: bytearray = bytearray()) -> None:
-      self.raw = raw
-
-
-class TLV:
-   """
-   value should be objects deriving Value class, or none
-   none represents length of 0
-   """
-   def __init__(self, tag:Tag, length:Length, value: Value|None ) -> None:
-      self.tag = tag
-      self.length = length
-      self.value = value
-
-
-class ConstructedValue(Value):
-   def __init__(self, children: list[TLV] = []) -> None:
-      self.children = children
-
 
 class DiagnosticsCollector:
    def __init__(self) -> None:
       self.diags = []
       pass
 
-   def add_error(self, error: any):
-      self.diags.append(error)
+   def get_diagnostics(self) -> list[any]:
+      return self.diags
+
+   def add_diagnostics(self, diagnostic: any):
+      self.diags.append(diagnostic)
+
+   def extend_diagnostics(self, diagnostics : list[any]):
+      self.diags.extend(diagnostics)
 
 class TLVParser:
    def __init__(
          self, 
          parent_tlv : TLV | None = None, 
-         diagnostic_collector: DiagnosticsCollector = DiagnosticsCollector()
+         diagnostic_collector: DiagnosticsCollector|None = None
          ) -> None:
       self._parent_tlv = parent_tlv
       self._bytes_taken = 0
-      self._diags = diagnostic_collector
+      if diagnostic_collector is None:
+         self.diagnostic_collector = DiagnosticsCollector()
+      else:
+         self.diagnostic_collector = diagnostic_collector
       
 
    def _next(self, input :  Iterator[int])->int:
-      # if bytes taken exceeds parent length, raise error
+      # if bytes taken exceeds parent length, add error
       if self._parent_tlv and self._parent_tlv.length.length == self._bytes_taken:
-         self._diags.add_error(f'TLV length exceeds parent length of: {self._parent_tlv.length.length}')
+         self.diagnostic_collector.add_diagnostics(f'TLV length exceeds parent length of: {self._parent_tlv.length.length}')
       
       self._bytes_taken += 1
       return input.__next__()
    
    def _parse_tag(self, input :  Iterator[int]) -> Tag:
       try:
-         cur_byte = input.__next__()
+         cur_byte = self._next(input)
       except StopIteration:
          return None
       
@@ -138,7 +94,7 @@ class TLVParser:
          while True:
             # get next bytes
             try:
-               cur_tag_num_byte = input.__next__()
+               cur_tag_num_byte = self._next(input)
             except StopIteration as e:
                raise EOFError("Unexpected EOF when parsing tag")
 
@@ -164,7 +120,7 @@ class TLVParser:
 
    def _parse_length(self, input :  Iterator[int]) -> Length:
       try:
-         cur_byte = input.__next__()
+         cur_byte = self._next(input)
       except StopIteration:
          raise EOFError("Unexpected EOF while parsing length")
       
@@ -184,7 +140,7 @@ class TLVParser:
          # multiple byte length
          while length_of_length>0:
             try:
-               cur_byte = input.__next__()
+               cur_byte = self._next(input)
             except StopIteration:
                raise EOFError("Unexpected EOF while parsing length")
             
@@ -202,7 +158,7 @@ class TLVParser:
       val = bytearray()
       while expected_len > 0:
          try:
-            cur_byte = input.__next__()
+            cur_byte = self._next(input)
          except StopIteration:
             raise EOFError("Unexpected EOF while parsing value")
          val.append(cur_byte)
@@ -211,8 +167,12 @@ class TLVParser:
 
    """ recursively parse children TLV """
    def _parse_constructed(self, input :  Iterator[int],  in_tlv: TLV):
-      expected_len = in_tlv.length.length
-      children = self.parse_tlv(input)
+
+      new_parser = TLVParser(in_tlv)
+      children = new_parser.parse_tlv(input)
+
+      self.diagnostic_collector.extend_diagnostics(new_parser.diagnostic_collector.get_diagnostics())
+
       return ConstructedValue(children)
 
 

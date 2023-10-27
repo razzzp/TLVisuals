@@ -1,7 +1,7 @@
 
 import io
 import unittest
-from tlvisuals.tlv_parser.parser import ByteGetter
+from tlvisuals.parser import ByteGetter
 
 class TestByteGetter(unittest.TestCase):
 
