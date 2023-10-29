@@ -38,14 +38,24 @@ class DiagnosticsCollector:
       self.diags = []
       pass
 
-   def get_diagnostics(self) -> list[any]:
+   def get_diagnostics(self) -> list[dict]:
       return self.diags
 
-   def add_diagnostics(self, diagnostic: any):
+   def add_diagnostics(self, diagnostic: dict):
       self.diags.append(diagnostic)
 
-   def extend_diagnostics(self, diagnostics : list[any]):
+   def add_error(self, msg: str):
+      self.diags.append({
+         'error_type': 'error',
+         'msg': msg
+      })
+
+   def extend_diagnostics(self, diagnostics : list[dict]):
       self.diags.extend(diagnostics)
+
+
+class ParseException(Exception):
+   pass
 
 class TLVParser:
    def __init__(
@@ -64,12 +74,13 @@ class TLVParser:
    def _next(self, input :  Iterator[int])->int:
       # if bytes taken exceeds parent length, add error
       if self._parent_tlv and self._parent_tlv.length.length == self._bytes_taken:
-         self.diagnostic_collector.add_diagnostics(f'TLV length exceeds parent length of: {self._parent_tlv.length.length}')
+         self.diagnostic_collector.add_error(f'TLV length exceeds parent length of: {self._parent_tlv.length.length}')
       
       self._bytes_taken += 1
       return input.__next__()
    
-   def _parse_tag(self, input :  Iterator[int]) -> Tag:
+
+   def _parse_tag(self, input :  Iterator[int]) -> Tag | None:
       try:
          cur_byte = self._next(input)
       except StopIteration:
@@ -95,15 +106,16 @@ class TLVParser:
             # get next bytes
             try:
                cur_tag_num_byte = self._next(input)
-            except StopIteration as e:
-               raise EOFError("Unexpected EOF when parsing tag")
+            except StopIteration:
+               self.diagnostic_collector.add_error(f'Unexpected EOF when parsing tag: {raw.hex()}')
+               return None
 
             raw.append(cur_tag_num_byte)
             cur_tag_num = cur_tag_num_byte & 0b0111_1111
 
             if len(raw) == 2 and cur_tag_num == 0:
                # first subsequent byte cannot be 0
-               raise ValueError("First subsequent tag byte cannot be 0x00")
+               self.diagnostic_collector.add_error("First subsequent tag byte cannot be 0x00")
             
             # append bits of cur tag num
             tag_number_acc+= '{0:07b}'.format(cur_tag_num)
@@ -118,11 +130,12 @@ class TLVParser:
 
 
 
-   def _parse_length(self, input :  Iterator[int]) -> Length:
+   def _parse_length(self, input :  Iterator[int]) -> Length | None:
       try:
          cur_byte = self._next(input)
       except StopIteration:
-         raise EOFError("Unexpected EOF while parsing length")
+         self.diagnostic_collector.add_error("Unexpected EOF while parsing length")
+         return None
       
       if cur_byte & 0b1000_0000 == 0:
          raw = bytearray()
@@ -131,7 +144,8 @@ class TLVParser:
       elif cur_byte & 0b1000_0000 == 0 and cur_byte & 0b0111_1111:
          # case using indefinite form, i.e. length byte is 0x80
          # not supported yet
-         raise ValueError("Indefinite length encoding is not supported")
+         self.diagnostic_collector.add_error(f'Indefinite length encoding is not supported: {raw.hex()}')
+         return None
       else:
          length_of_length = cur_byte & 0b0111_1111
          real_length = 0
@@ -142,7 +156,8 @@ class TLVParser:
             try:
                cur_byte = self._next(input)
             except StopIteration:
-               raise EOFError("Unexpected EOF while parsing length")
+               self.diagnostic_collector.add_error(f'Unexpected EOF while parsing length: {raw.hex()}')
+               return None
             
             length_of_length-=1
             # shift left since there are more bytes
@@ -153,20 +168,22 @@ class TLVParser:
          return Length(length=real_length,raw=raw)
 
 
-   def _parse_primitive(self, input :  Iterator[int], in_tlv: TLV):
+   def _parse_primitive(self, input :  Iterator[int], in_tlv: TLV) -> PrimitiveValue | None:
       expected_len = in_tlv.length.length
       val = bytearray()
       while expected_len > 0:
          try:
             cur_byte = self._next(input)
          except StopIteration:
-            raise EOFError("Unexpected EOF while parsing value")
+            self.diagnostic_collector.add_error("Unexpected EOF while parsing value")
+            return None
          val.append(cur_byte)
          expected_len -= 1
       return PrimitiveValue(val)
+   
 
    """ recursively parse children TLV """
-   def _parse_constructed(self, input :  Iterator[int],  in_tlv: TLV):
+   def _parse_constructed(self, input :  Iterator[int],  in_tlv: TLV) -> ConstructedValue | None:
 
       new_parser = TLVParser(in_tlv)
       children = new_parser.parse_tlv(input)
@@ -176,7 +193,7 @@ class TLVParser:
       return ConstructedValue(children)
 
 
-   def _parse_value(self, input :  Iterator[int],  in_tlv: TLV) -> Value:
+   def _parse_value(self, input :  Iterator[int],  in_tlv: TLV) -> Value | None:
       if in_tlv.length.length == 0:
          return None
       
@@ -194,6 +211,8 @@ class TLVParser:
             if tag == None:
                break
             len = self._parse_length(input)
+            if len == None:
+               break
 
             tlv= TLV(tag, len, None)
 

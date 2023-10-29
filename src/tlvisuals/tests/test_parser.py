@@ -61,14 +61,16 @@ class TestTLVParser(unittest.TestCase):
       self.assertEqual(tag.raw, b'\x1f\xff\x80\x01')
 
    def test_first_subs_tag_byte_0(self):
-      bytes = b'\x1f\x80'
+      bytes = b'\x1f\x80\x01'
       iter = bytes.__iter__()
-      self.assertRaises(ValueError, self.parser._parse_tag, iter)
+      result = self.parser._parse_tag(iter)
+      self.assertEqual(len(self.parser.diagnostic_collector.get_diagnostics()), 1)
 
    def test_tag_multiple_eof(self):
       bytes = b'\x1f\x81'
       iter = bytes.__iter__()
-      self.assertRaises(EOFError, self.parser._parse_tag, iter)
+      result = self.parser._parse_tag(iter)
+      self.assertEqual(len(self.parser.diagnostic_collector.get_diagnostics()), 1)
 
    def test_length_1byte(self):
       bytes = bytearray()
@@ -99,7 +101,8 @@ class TestTLVParser(unittest.TestCase):
    def test_length_eof(self):
       bytes = b'\x84\x01\x01\x01'
       iter = bytes.__iter__()
-      self.assertRaises(EOFError,  self.parser._parse_length, iter)
+      result = self.parser._parse_length(iter)
+      self.assertEqual(len(self.parser.diagnostic_collector.get_diagnostics()), 1)
 
    def test_value_primitive(self):
       bytes = b'\x01\x02\x03\x04'
@@ -119,7 +122,9 @@ class TestTLVParser(unittest.TestCase):
          self.create_primitive_tag(),
          self.create_length(4),
       )
-      self.assertRaises(EOFError, self.parser._parse_value, input, test_tlv)
+      result = self.parser._parse_value(input, test_tlv)
+      self.assertEqual(len(self.parser.diagnostic_collector.get_diagnostics()),1)
+
 
    def test_value_constructed(self):
       bytes = b'\x81\x04\x00\x01\x02\x03\x82\x04\x00\x00\x00\x00'
