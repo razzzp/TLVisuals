@@ -14,12 +14,28 @@
       },
 
       {
+         "name": "Python: E2E Test",
+         "type": "python",
+         "request": "launch",
+         "module": "tlvisuals",
+         "cwd": "${workspaceFolder}/src",
+         "args": [
+            "--file", "${workspaceFolder}/test_input_files/input.txt",
+            "--out", "outfile",
+            "-v"
+         ],
+         "console": "integratedTerminal",
+         "justMyCode": true
+      },
+
+      {
          "name": "Python: Unit Tests",
          "type": "python",
          "request": "launch",
          "module": "unittest",
          "console": "integratedTerminal",
-         "args": ["discover", "./tlvisuals/tests"],
+         "cwd": "${workspaceFolder}/src",
+         "args": ["discover", "${workspaceFolder}/src/tlvisuals/tests"],
          "justMyCode": true
       }
    ]
