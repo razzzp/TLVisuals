@@ -9,15 +9,35 @@ class TagClass(IntFlag):
    CONTEXT_SPECIFIC = 2
    PRIVATE =3
 
+   def __str__(self) -> str:
+      match self:
+         case TagClass.UNIVERSAL:
+            return 'UNIVERSAL'
+         case TagClass.APPLICATION:
+            return 'APPLICATION'
+         case TagClass.CONTEXT_SPECIFIC:
+            return 'CONTEXT_SPECIFIC'
+         case TagClass.PRIVATE:
+            return 'PRIVATE'
+
+
    
 class TagType(IntFlag):
    PRIMITIVE = 0
    CONSTRUCTED = 1
 
+   def __str__(self) -> str:
+      match self:
+         case TagType.PRIMITIVE:
+            return 'PRIMITIVE'
+         case TagType.CONSTRUCTED:
+            return 'CONSTRUCTED'
+
 
 class PrimitiveType(IntFlag):
    UNKNOWN = 0
    BOOLEAN = 1
+   
 
 
 

@@ -31,6 +31,8 @@ class RawFormatOutputBuilderTest(unittest.TestCase):
    def test_one_primitive_tlv(self):
       input = [self.create_universal_primitive_tlv(1,1,b'\xff')]
       expected = """01 01 FF\n"""
+
+      self.builder._inline_interpretation = False
       result = self.builder.build(input)
       self.assertEqual(result, expected)
 
@@ -43,6 +45,7 @@ class RawFormatOutputBuilderTest(unittest.TestCase):
          io.write(f'{i.to_bytes(1,"big").hex().upper()} 01 FF\n')
       expected = io.getvalue()
 
+      self.builder._inline_interpretation = False
       result = self.builder.build(input)
       self.assertEqual(result, expected)
 
@@ -56,9 +59,10 @@ class RawFormatOutputBuilderTest(unittest.TestCase):
       io.write("21 00\n")
       for i in range(1, 9):
          io.write(f'   {i.to_bytes(1, "big").hex().upper()} 01 FF\n')
-      io.write('\n')
+      # io.write('\n')
       expected = io.getvalue()
 
+      self.builder._inline_interpretation = False
       result = self.builder.build(input)
       # print(result)
       # print('\n')

@@ -53,6 +53,11 @@ class DiagnosticsCollector:
    def extend_diagnostics(self, diagnostics : list[dict]):
       self.diags.extend(diagnostics)
 
+class LengthExceededException(Exception):
+   def __init__(self, *args: object) -> None:
+      super().__init__(*args)
+      self.in_tlv, self.input = args
+   pass
 
 class ParseException(Exception):
    pass
@@ -74,16 +79,19 @@ class TLVParser:
    def _next(self, input :  Iterator[int])->int:
       # if bytes taken exceeds parent length, add error
       if self._parent_tlv and self._parent_tlv.length.length == self._bytes_taken:
-         self.diagnostic_collector.add_error(f'TLV length exceeds parent length of: {self._parent_tlv.length.length}')
+         self.diagnostic_collector.add_diagnostics(f'TLV length exceeds parent length of: {self._parent_tlv.length.length}')
+         # TODO what to do? assume the parent tlv length is wrong? or the current tlv length wrong?
+         # raise LengthExceededException(self._parent_tlv, input)
       
       self._bytes_taken += 1
       return input.__next__()
    
-
-   def _parse_tag(self, input :  Iterator[int]) -> Tag | None:
+   def _parse_tag(self, input :  Iterator[int]) -> Tag:
       try:
          cur_byte = self._next(input)
       except StopIteration:
+         return None
+      except EOFError:
          return None
       
       raw = bytearray()
@@ -189,6 +197,7 @@ class TLVParser:
       children = new_parser.parse_tlv(input)
 
       self.diagnostic_collector.extend_diagnostics(new_parser.diagnostic_collector.get_diagnostics())
+      self._bytes_taken += new_parser._bytes_taken
 
       return ConstructedValue(children)
 
@@ -207,6 +216,9 @@ class TLVParser:
       result = []
       while True:
          try:
+            if self._parent_tlv and self._parent_tlv.length.length == self._bytes_taken:
+               # already parsed expected length
+               break
             tag = self._parse_tag(input)
             if tag == None:
                break
@@ -220,6 +232,10 @@ class TLVParser:
 
             tlv.value = value
             result.append(tlv)
+         except LengthExceededException as e:
+            print(e.in_tlv)
+            print(e.input)
+            raise e
          except Exception as e:
             raise e
       return result

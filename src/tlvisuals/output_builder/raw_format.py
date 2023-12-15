@@ -10,6 +10,7 @@ class RawFormatBuilder:
       self._indent_size = indent_size
       self._indent_str = ' ' * indent_size
       self._indent = indent
+      self._inline_interpretation = True
 
    def _add_indent(self, output: StringIO):
       for _ in range(0, self._indent):
@@ -22,22 +23,28 @@ class RawFormatBuilder:
 
 
    def _build_constructed(self, tlv: TLV, output:StringIO):
-      output.write('\n')
       new_builder = RawFormatBuilder(self._indent_size, self._indent+1)
+      new_builder._inline_interpretation = self._inline_interpretation
       new_builder.build_on_output(tlv.value.children, output)
 
 
    def _build_tlv(self, tlv: TLV, output:StringIO):
       self._add_indent(output)
       output.write(tlv.tag.raw.hex().upper())
+      if self._inline_interpretation:
+         output.write(' (class:{};type:{};tagnum:{})'.format(tlv.tag.cla, tlv.tag.type, tlv.tag.tag_number))
       output.write(' ')
       output.write(tlv.length.raw.hex().upper())
+      if self._inline_interpretation:
+         output.write(' (length:{})'.format(tlv.length.length))
       if not tlv.value is None:
          if tlv.tag.type == TagType.PRIMITIVE:
             self._build_primitive(tlv, output)
+            output.write('\n')
          else:
+            output.write('\n')
             self._build_constructed(tlv, output)
-      output.write('\n')
+      # output.write('\n')
 
    def build_on_output(self, input: list[TLV], output: StringIO):
       for tlv in input:
@@ -47,6 +54,7 @@ class RawFormatBuilder:
       output = StringIO()
       self.build_on_output(input, output)
       return output.getvalue()
+   
 
 
 

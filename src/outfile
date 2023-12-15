@@ -1,0 +1,40 @@
+30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 820193 (length:403)
+   30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 820139 (length:313)
+      A0 (class:CONTEXT_SPECIFIC;type:CONSTRUCTED;tagnum:0) 03 (length:3)
+         02 (class:UNIVERSAL;type:PRIMITIVE;tagnum:2) 01 (length:1) 02
+      02 (class:UNIVERSAL;type:PRIMITIVE;tagnum:2) 08 (length:8) 0F01010101010202
+      30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 0A (length:10)
+         06 (class:UNIVERSAL;type:PRIMITIVE;tagnum:6) 08 (length:8) 2A8648CE3D040302
+      30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 24 (length:36)
+         31 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:17) 22 (length:34)
+            30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 20 (length:32)
+               06 (class:UNIVERSAL;type:PRIMITIVE;tagnum:6) 03 (length:3) 550403
+               0C (class:UNIVERSAL;type:PRIMITIVE;tagnum:12) 19 (length:25) 4465766963655F4F454D5F43415F4345525449464943415445
+      30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 20 (length:32)
+         17 (class:UNIVERSAL;type:PRIMITIVE;tagnum:23) 0D (length:13) 3230303330343039333932375A
+         18 (class:UNIVERSAL;type:PRIMITIVE;tagnum:24) 0F (length:15) 34343834303431353039333932375A
+      30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 24 (length:36)
+         31 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:17) 22 (length:34)
+            30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 20 (length:32)
+               06 (class:UNIVERSAL;type:PRIMITIVE;tagnum:6) 03 (length:3) 550403
+               0C (class:UNIVERSAL;type:PRIMITIVE;tagnum:12) 19 (length:25) 4465766963655F4F454D5F43415F4345525449464943415445
+      30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 59 (length:89)
+         30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 13 (length:19)
+            06 (class:UNIVERSAL;type:PRIMITIVE;tagnum:6) 07 (length:7) 2A8648CE3D0201
+            06 (class:UNIVERSAL;type:PRIMITIVE;tagnum:6) 08 (length:8) 2A8648CE3D030107
+         03 (class:UNIVERSAL;type:PRIMITIVE;tagnum:3) 42 (length:66) 0004DE5EB41A978BC8AED8B45BA75E3367C751B1067AE5DD8C5FC67E05B82DE318580E78DE72190EA038381456217A2FE63588E9BD5EC29A74693B8EAB3F99210A86
+      A3 (class:CONTEXT_SPECIFIC;type:CONSTRUCTED;tagnum:3) 53 (length:83)
+         30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 51 (length:81)
+            30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 1D (length:29)
+               06 (class:UNIVERSAL;type:PRIMITIVE;tagnum:6) 03 (length:3) 551D0E
+               04 (class:UNIVERSAL;type:PRIMITIVE;tagnum:4) 16 (length:22) 041457D7D0B5EB7865F7F7614B9D37A7A034D26CB27B
+            30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 1F (length:31)
+               06 (class:UNIVERSAL;type:PRIMITIVE;tagnum:6) 03 (length:3) 551D23
+               04 (class:UNIVERSAL;type:PRIMITIVE;tagnum:4) 18 (length:24) 3016801457D7D0B5EB7865F7F7614B9D37A7A034D26CB27B
+            30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 0F (length:15)
+               06 (class:UNIVERSAL;type:PRIMITIVE;tagnum:6) 03 (length:3) 551D13
+               01 (class:UNIVERSAL;type:PRIMITIVE;tagnum:1) 01 (length:1) FF
+               04 (class:UNIVERSAL;type:PRIMITIVE;tagnum:4) 05 (length:5) 30030101FF
+   30 (class:UNIVERSAL;type:CONSTRUCTED;tagnum:16) 0A (length:10)
+      06 (class:UNIVERSAL;type:PRIMITIVE;tagnum:6) 08 (length:8) 2A8648CE3D040302
+   03 (class:UNIVERSAL;type:PRIMITIVE;tagnum:3) 48 (length:72) 0030450220018DA41EB843B2A8F159AD5C67DCFA65478C9E4164B5B37BA1F8C137DF61C76B022100DD1B12E723B21CD3661D37DF0250AB469DC867FA268A7598D6CF31B76EE2BCA7
