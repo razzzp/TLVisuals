@@ -2,9 +2,9 @@
    "python.testing.unittestArgs": [
       "-v",
       "-s",
-      "${workspaceFolder}/src/tlvisuals/tests",
+      "./src",
       "-p",
-      "test*.py"
+      "test_*.py"
    ],
    "python.testing.pytestEnabled": false,
    "python.testing.unittestEnabled": true,
