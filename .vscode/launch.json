@@ -20,8 +20,7 @@
          "module": "tlvisuals",
          "cwd": "${workspaceFolder}/src",
          "args": [
-            "--file", "${workspaceFolder}/test_input_files/input.txt",
-            "--out", "outfile",
+            "--file", "${workspaceFolder}/tests/input_files/input.txt",
             "-v"
          ],
          "console": "integratedTerminal",

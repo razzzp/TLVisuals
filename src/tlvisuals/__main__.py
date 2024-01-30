@@ -14,7 +14,7 @@ def main():
    parser.add_argument('-o', '--out')      # option that takes a value
    parser.add_argument('-v', '--verbose',action='store_true')  # on/off flag
    args = parser.parse_args()
-   print(args.file, args.out, args.verbose)
+   # print(args.file, args.out, args.verbose)
 
    # construct byte getter
    if args.file:
