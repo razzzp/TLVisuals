@@ -1,7 +1,7 @@
 import argparse
 import sys
 import json
-from tlvisuals.tlv_parser import ByteGetter, TLVParser, DiagnosticsCollector
+from tlvisuals.tlv_parser import ByteGetter, TLVParser, DiagnosticsCollector, DerByteGetter
 from tlvisuals.output_builder.raw_format import RawFormatBuilder
 
 def main():
@@ -13,15 +13,24 @@ def main():
    parser.add_argument('-f', '--file')           # positional argument
    parser.add_argument('-o', '--out')      # option that takes a value
    parser.add_argument('-v', '--verbose',action='store_true')  # on/off flag
+   parser.add_argument('--input-format')  # inform formats: 'der', 'hextext'
    args = parser.parse_args()
    # print(args.file, args.out, args.verbose)
 
    # construct byte getter
    if args.file:
-      input_stream = open(args.file, 'r')
+      if args.input_format and args.input_format == 'der':
+         input_stream = open(args.file, 'rb')
+      else:
+         input_stream = open(args.file, 'r')
    else:
       input_stream = sys.stdin
-   byte_getter = ByteGetter(input_stream)
+   
+   if args.input_format and args.input_format == 'der':
+      byte_getter = DerByteGetter(input_stream)
+   else:
+      byte_getter = ByteGetter(input_stream)
+  
 
    # construct parser
    diags = DiagnosticsCollector()

@@ -31,7 +31,23 @@ class ByteGetter(Iterator[int]):
          raise ValueError("Odd number of chars found")
       
       raise StopIteration()
-      
+
+
+class DerByteGetter(Iterator[int]):
+
+   def __init__(self, stream: io.RawIOBase):
+      self._stream = stream
+
+   def __iter__(self) -> Iterator[int]:
+      return self
+
+   def __next__(self) -> int:
+      cur = self._stream.read(1)
+      if cur:
+         return cur[0]
+      else:
+         raise StopIteration()
+   
 
 class DiagnosticsCollector:
    def __init__(self) -> None:
