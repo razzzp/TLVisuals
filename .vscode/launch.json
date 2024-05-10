@@ -6,7 +6,7 @@
    "configurations": [
       {
          "name": "Python: Current File",
-         "type": "python",
+         "type": "debugpy",
          "request": "launch",
          "program": "${file}",
          "console": "integratedTerminal",
@@ -14,15 +14,31 @@
       },
 
       {
-         "name": "Python: E2E Test",
-         "type": "python",
+         "name": "Python: E2E Test tlvparse",
+         "type": "debugpy",
          "request": "launch",
          "module": "tlvisuals",
          "cwd": "${workspaceFolder}/src",
          "args": [
+            "-v",
+            "tlvparse",
             "--file", "${workspaceFolder}/tests/input_files/input.txt",
             "--output-format", "interpretation",
-            "-v"
+         ],
+         "console": "integratedTerminal",
+         "justMyCode": true
+      },
+
+      {
+         "name": "Python: E2E Test hextoraw",
+         "type": "debugpy",
+         "request": "launch",
+         "module": "tlvisuals",
+         "cwd": "${workspaceFolder}/src",
+         "args": [
+            "-v",
+            "hextoraw",
+            "--file", "${workspaceFolder}/tests/input_files/input.txt",
          ],
          "console": "integratedTerminal",
          "justMyCode": true
@@ -30,7 +46,7 @@
 
       {
          "name": "Python: Unit Tests",
-         "type": "python",
+         "type": "debugpy",
          "request": "launch",
          "module": "unittest",
          "console": "integratedTerminal",
