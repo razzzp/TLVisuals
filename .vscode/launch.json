@@ -21,6 +21,7 @@
          "cwd": "${workspaceFolder}/src",
          "args": [
             "--file", "${workspaceFolder}/tests/input_files/input.txt",
+            "--output-format", "interpretation",
             "-v"
          ],
          "console": "integratedTerminal",
