@@ -1,4 +1,5 @@
 import argparse
+from argparse import RawTextHelpFormatter
 import sys
 import json
 from tlvisuals.tlv_parser import ByteGetter, TLVParser, DiagnosticsCollector, DerByteGetter
@@ -9,11 +10,13 @@ def main():
       prog='TLVisuals',
       description='Prints TLV in a readable format. \
       Without options, app will read from standard input and assume the format is Hex in ASCII form, and output will be to standard output',
+      formatter_class=RawTextHelpFormatter
       )
-   parser.add_argument('-f', '--file')           # positional argument
-   parser.add_argument('-o', '--out')      # option that takes a value
-   parser.add_argument('-v', '--verbose',action='store_true')  # on/off flag
-   parser.add_argument('--input-format')  # inform formats: 'der', 'hextext'
+   parser.add_argument('-f', '--file', help="Parses input from specified FILE")
+   parser.add_argument('-o', '--out', help="Writes output to specified OUT file")
+   parser.add_argument('-v', '--verbose',action='store_true', help="Outputs more logs")  # on/off flag
+   parser.add_argument('--input-format', help="Specifies input format:\n -der: input is raw hex\notherwise assumed to be ascii hex")  # inform formats: 'der', 'hextext'
+   parser.add_argument('--output-format', help="Specifies output format:\n -interpretation: shows basic TLV flag interpretation")
    args = parser.parse_args()
    # print(args.file, args.out, args.verbose)
 
@@ -40,7 +43,7 @@ def main():
    #    print(json.dumps(tlv, indent=1))
 
    # build output
-   output_builder = RawFormatBuilder()
+   output_builder = RawFormatBuilder(inline_interpretation = True if args.output_format == "interpretation" else False)
    out_str = output_builder.build(parsed_tlvs)
 
    # write to stream

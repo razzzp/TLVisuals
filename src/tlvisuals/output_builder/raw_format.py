@@ -4,13 +4,16 @@
 from io import StringIO
 from tlvisuals.tlv import *
 
-
+"""
+   Prints TLVs with indentation and with interpretation 
+   of basic TLV flags if enabled
+"""
 class RawFormatBuilder:
-   def __init__(self, indent_size:int = 3,  indent:int = 0) -> None:
+   def __init__(self, indent_size:int = 3,  indent:int = 0, inline_interpretation: bool = True) -> None:
       self._indent_size = indent_size
       self._indent_str = ' ' * indent_size
       self._indent = indent
-      self._inline_interpretation = True
+      self._inline_interpretation = inline_interpretation
 
    def _add_indent(self, output: StringIO):
       for _ in range(0, self._indent):
@@ -44,7 +47,9 @@ class RawFormatBuilder:
          else:
             output.write('\n')
             self._build_constructed(tlv, output)
-      # output.write('\n')
+      else:
+         output.write('\n')
+
 
    def build_on_output(self, input: list[TLV], output: StringIO):
       for tlv in input:
