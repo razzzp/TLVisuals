@@ -87,7 +87,7 @@ def hextoraw(args):
    out_bytes = bytes(byte_getter)
     # write to stream
    if args.out:
-      with open(args.out, 'wtb') as f:
+      with open(args.out, 'wb') as f:
          f.write(out_bytes)
    else:
       sys.stdout.buffer.write(out_bytes)
