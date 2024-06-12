@@ -33,3 +33,11 @@ options:
   -h, --help            show this help message and exit  
   -f FILE, --file FILE  Reads input from specified FILE  
   -o OUT, --out OUT     Writes output to specified OUT file  
+
+
+# Packaging
+Delete files in dist/
+python3 -m build
+twine upload dist/*
+use token for auth
+username: \_\_token\_\_
